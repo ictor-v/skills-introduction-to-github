@@ -1,0 +1,33 @@
+# HTML simples com fetch (salvar como index.html)
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro de Aluno</title>
+</head>
+<body>
+  <h1>Cadastrar Aluno</h1>
+  <form id="cadastroAluno">
+    <input type="text" name="nome" placeholder="Nome do aluno" required />
+    <input type="date" name="nascimento" required />
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <script>
+    document.getElementById("cadastroAluno").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const aluno = Object.fromEntries(formData);
+
+      const response = await fetch("http://localhost:8000/alunos", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(aluno)
+      });
+
+      const data = await response.json();
+      alert("Aluno cadastrado com sucesso!");
+    });
+  </script>
+</body>
+</html>

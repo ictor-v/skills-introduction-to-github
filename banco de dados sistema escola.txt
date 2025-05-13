@@ -1,0 +1,96 @@
+-- 1. Tabela de Responsáveis
+CREATE TABLE responsaveis (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    telefone VARCHAR(20),
+    email VARCHAR(100)
+);
+
+-- 2. Tabela de Alunos
+CREATE TABLE alunos (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    data_nascimento DATE,
+    turma_id INTEGER REFERENCES turmas(id),
+    responsavel_id INTEGER REFERENCES responsaveis(id)
+);
+
+-- 3. Tabela de Turmas
+CREATE TABLE turmas (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL,
+    ano_letivo INTEGER NOT NULL
+);
+
+-- 4. Tabela de Disciplinas
+CREATE TABLE disciplinas (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
+);
+
+-- 5. Tabela de Professores
+CREATE TABLE professores (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100)
+);
+
+-- 6. Tabela de Avaliações
+CREATE TABLE avaliacoes (
+    id SERIAL PRIMARY KEY,
+    titulo VARCHAR(100) NOT NULL,
+    tipo VARCHAR(50) CHECK (tipo IN ('Escrita', 'Oral', 'Trabalho', 'Outros')),
+    data_aplicacao DATE NOT NULL,
+    disciplina_id INTEGER REFERENCES disciplinas(id),
+    professor_id INTEGER REFERENCES professores(id)
+);
+
+-- 7. Tabela de Notas
+CREATE TABLE notas (
+    id SERIAL PRIMARY KEY,
+    aluno_id INTEGER REFERENCES alunos(id),
+    avaliacao_id INTEGER REFERENCES avaliacoes(id),
+    nota NUMERIC(4,2) CHECK (nota >= 0 AND nota <= 12)
+);
+
+-- 8. Tabela de Frequência
+CREATE TABLE frequencias (
+    id SERIAL PRIMARY KEY,
+    aluno_id INTEGER REFERENCES alunos(id),
+    disciplina_id INTEGER REFERENCES disciplinas(id),
+    data DATE NOT NULL,
+    presente BOOLEAN NOT NULL
+);
+
+-- 9. Tabela de Usuários (login e permissões)
+CREATE TABLE usuarios (
+    id SERIAL PRIMARY KEY,
+    nome_usuario VARCHAR(50) UNIQUE NOT NULL,
+    senha_hash TEXT NOT NULL,
+    tipo_usuario VARCHAR(20) CHECK (tipo_usuario IN ('admin', 'professor', 'responsavel')),
+    professor_id INTEGER REFERENCES professores(id),
+    responsavel_id INTEGER REFERENCES responsaveis(id),
+    cpf VARCHAR(14),
+    endereco TEXT
+);
+
+-- 10. View: Média de notas por aluno e disciplina
+CREATE OR REPLACE VIEW media_aluno_disciplina AS
+SELECT
+    a.id AS aluno_id,
+    a.nome AS nome_aluno,
+    d.id AS disciplina_id,
+    d.nome AS nome_disciplina,
+    ROUND(AVG(n.nota), 2) AS media_final
+FROM
+    notas n
+JOIN
+    avaliacoes av ON n.avaliacao_id = av.id
+JOIN
+    disciplinas d ON av.disciplina_id = d.id
+JOIN
+    alunos a ON n.aluno_id = a.id
+GROUP BY
+    a.id, a.nome, d.id, d.nome
+ORDER BY
+    nome_aluno, nome_disciplina;
